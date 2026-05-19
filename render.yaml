@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: phoneshop
+    env: php
+    buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && php artisan view:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phoneshop-db
+          property: connectionString
+      - key: LOG_CHANNEL
+        value: stderr
+
+databases:
+  - name: phoneshop-db
+    databaseName: phoneshop
+    plan: free

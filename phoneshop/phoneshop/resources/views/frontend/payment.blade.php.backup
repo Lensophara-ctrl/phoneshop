@@ -1,0 +1,1750 @@
+@extends('frontend.layouts.app')
+
+@section('content')
+<div class="bakong-page">
+    <!-- Animated Background Particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="bakong-card">
+        <!-- Header with Bakong Logo -->
+        <div class="bakong-header">
+            <div class="bakong-logo pulse-glow">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="48" height="48" rx="12" fill="url(#gradient)"/>
+                    <rect x="14" y="14" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="22" y="14" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="30" y="14" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="14" y="22" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="22" y="22" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="30" y="22" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="14" y="30" width="6" height="6" rx="1.5" fill="white"/>
+                    <rect x="22" y="30" width="6" height="6" rx="1.5" fill="white"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="48" y2="48">
+                            <stop stop-color="#667eea"/>
+                            <stop offset="1" stop-color="#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h2 class="bounce-in">Bakong KHQR</h2>
+            <p class="fade-in-up">Scan to Pay</p>
+        </div>
+
+        <!-- Amount Display -->
+        <div class="bakong-amount shine-effect">
+            <div class="amount-label">TOTAL AMOUNT</div>
+            <div class="amount-number scale-in">${{ number_format($totalAmount, 2) }}</div>
+            <div class="invoice-label">Invoice: {{ $billNumber }}</div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="bakong-qr">
+            <div class="qr-container qr-pulse">
+                <div class="qr-glow"></div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode($khqr) }}" 
+                     alt="Bakong QR Code"
+                     class="qr-image">
+            </div>
+            <div class="qr-hint bounce">
+                <i class="fa-solid fa-mobile-screen"></i> Scan with Bakong App
+            </div>
+        </div>
+
+        <!-- Deadline Timer -->
+        <div class="deadline-timer" id="deadlineTimer">
+            <div class="timer-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="timer-content">
+                <div class="timer-label">Time Remaining</div>
+                <div class="timer-display" id="timerDisplay">15:00</div>
+            </div>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="bakong-status" id="bakongStatus">
+            <div class="status-indicator waiting">
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                </div>
+                <span id="statusText">Waiting for payment...</span>
+            </div>
+        </div>
+
+        <!-- Payment Actions -->
+        <div id="paymentActions">
+            <!-- Manual Check Button -->
+            <button type="button" class="bakong-btn check-btn" id="checkPaymentBtn" onclick="manualCheckPayment()">
+                <i class="fa-solid fa-rotate"></i> Check Payment Status
+            </button>
+            
+            <!-- Developer: Simulate Payment (HIDDEN) -->
+            @if(false)
+            <button type="button" class="bakong-btn" id="simulatePaymentBtn" onclick="simulatePayment()" style="background: #10b981; display: none;">
+                <i class="fa-solid fa-flask"></i> Simulate Payment (Dev Only)
+            </button>
+            @endif
+        </div>
+
+        <!-- Invoice Section (Hidden until payment confirmed) -->
+        <div id="invoiceSection" style="display: none;" class="invoice-section-animated">
+            <div class="payment-success-message">
+                <i class="fa-solid fa-check-circle"></i>
+                <span>Payment Confirmed!</span>
+            </div>
+            
+            <!-- Print Invoice Button -->
+            <button type="button" class="bakong-btn print-btn" id="printInvoiceBtn" onclick="printInvoice()">
+                <i class="fa-solid fa-print"></i> Print Invoice
+            </button>
+            
+            <!-- Continue to Success Page -->
+            <a href="{{ route('shop.success', $billNumber) }}?print=auto" class="bakong-btn success-btn" id="continueBtn">
+                <i class="fa-solid fa-arrow-right"></i> Continue
+            </a>
+        </div>
+
+        <!-- Payment Instructions -->
+        <div class="bakong-steps" id="paymentSteps">
+            <h4>How to Pay</h4>
+            <div class="step-list">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Open Bakong app on your phone</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Tap Scan and scan QR code</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Enter amount: <strong>${{ number_format($totalAmount, 2) }}</strong></div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Confirm payment</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Wait for automatic detection or click "Check Payment"</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ route('shop.cart') }}" class="back-link" id="backLink">
+            <i class="fa-solid fa-arrow-left"></i> Back to Cart
+        </a>
+    </div>
+
+    <!-- Hidden Invoice Template for Printing -->
+    <div id="printableInvoice" style="display: none;">
+        <div class="invoice-container">
+            <div class="invoice-header">
+                <h2>PhoneShop</h2>
+                <p>123 Modern Street, Phnom Penh</p>
+                <p>support@phoneshop.com</p>
+            </div>
+            <div class="invoice-info">
+                <h3>INVOICE</h3>
+                <p><strong>Bill No:</strong> {{ $billNumber }}</p>
+                <p><strong>Date:</strong> {{ date('M d, Y') }}</p>
+            </div>
+            <div class="invoice-customer">
+                <h4>Billed To:</h4>
+                <p><strong>Customer:</strong> {{ auth()->user()->name ?? 'Guest' }}</p>
+                <p><strong>Email:</strong> {{ auth()->user()->email ?? 'N/A' }}</p>
+            </div>
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceItems">
+                    <!-- Items will be loaded dynamically -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>Total:</strong></td>
+                        <td id="invoiceTotal">${{ number_format($totalAmount, 2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="invoice-footer">
+                <p>Thank you for choosing PhoneShop!</p>
+                <p>This is a computer-generated invoice.</p>
+            </div>
+        </div>
+    </div>
+
+<style>
+* { 
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.bakong-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated Floating Particles */
+.particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: float 15s infinite ease-in-out;
+}
+
+.particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 12s; }
+.particle:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 15s; }
+.particle:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 18s; }
+.particle:nth-child(4) { left: 40%; animation-delay: 1s; animation-duration: 14s; }
+.particle:nth-child(5) { left: 60%; animation-delay: 3s; animation-duration: 16s; }
+.particle:nth-child(6) { left: 70%; animation-delay: 5s; animation-duration: 13s; }
+.particle:nth-child(7) { left: 80%; animation-delay: 2.5s; animation-duration: 17s; }
+.particle:nth-child(8) { left: 90%; animation-delay: 4.5s; animation-duration: 19s; }
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Pulse Glow Animation */
+@keyframes pulse-glow {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+    }
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.8));
+    }
+}
+
+.pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Bounce In Animation */
+@keyframes bounce-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) translateY(-20px);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.bounce-in {
+    animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Fade In Up Animation */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fade-in-up 0.6s ease-out 0.2s both;
+}
+
+/* Scale In Animation */
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.scale-in {
+    animation: scale-in 0.5s ease-out 0.3s both;
+}
+
+/* QR Pulse Animation */
+@keyframes qr-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.3), 0 8px 10px -6px rgba(102, 126, 234, 0.2);
+    }
+}
+
+.qr-pulse {
+    animation: qr-pulse 2s ease-in-out infinite;
+}
+
+/* QR Glow Effect */
+.qr-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.2) 0%, transparent 70%);
+    border-radius: 16px;
+    animation: glow-pulse 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+/* Bounce Animation */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.bounce {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+/* Shine Effect Animation */
+@keyframes shine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.shine-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.shine-effect::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: shine 3s ease-in-out infinite;
+}
+
+.bakong-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: moveBackground 20s linear infinite;
+}
+
+@keyframes moveBackground {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+.bakong-card {
+    background: white;
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bakong-header { 
+    margin-bottom: 32px;
+    animation: fadeIn 0.6s ease-out 0.2s both;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.bakong-logo {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 16px;
+    animation: scaleIn 0.5s ease-out 0.3s both;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.bakong-header h2 { 
+    color: #1f2937; 
+    font-size: 28px; 
+    margin: 0 0 8px 0; 
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.bakong-header p { 
+    color: #6b7280; 
+    font-size: 15px; 
+    margin: 0;
+    font-weight: 500;
+}
+
+.bakong-amount {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    animation: fadeIn 0.6s ease-out 0.4s both;
+}
+
+.amount-label { 
+    color: #6b7280; 
+    font-size: 11px; 
+    text-transform: uppercase; 
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.amount-number { 
+    font-size: 48px; 
+    font-weight: 900; 
+    color: #111827; 
+    margin: 8px 0;
+    letter-spacing: -1px;
+}
+
+.invoice-label { 
+    color: #9ca3af; 
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.bakong-qr { 
+    margin-bottom: 32px;
+    animation: fadeIn 0.6s ease-out 0.5s both;
+}
+
+.qr-container {
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    display: inline-block;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 16px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.qr-container:hover {
+    transform: scale(1.03);
+    box-shadow: 0 20px 40px -10px rgba(102, 126, 234, 0.4);
+}
+
+.qr-image { 
+    width: 240px; 
+    height: 240px; 
+    border-radius: 8px;
+    display: block;
+}
+
+.qr-hint { 
+    color: #6b7280; 
+    font-size: 14px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px;
+    font-weight: 500;
+}
+
+.qr-hint i { 
+    color: #667eea;
+    font-size: 16px;
+}
+
+/* Deadline Timer */
+.deadline-timer {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #f59e0b;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: timer-pulse 2s ease-in-out infinite, fade-in-up 0.6s ease-out 0.6s both;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.deadline-timer.warning {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-color: #ef4444;
+    animation: timer-urgent 1s ease-in-out infinite, fade-in-up 0.6s ease-out 0.6s both;
+}
+
+.deadline-timer.expired {
+    background: linear-gradient(135deg, #fee2e2, #fca5a5);
+    border-color: #dc2626;
+    animation: none;
+}
+
+@keyframes timer-pulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+}
+
+@keyframes timer-urgent {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+        transform: scale(1.02);
+    }
+}
+
+.timer-icon {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #f59e0b;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.deadline-timer.warning .timer-icon {
+    color: #ef4444;
+    animation: icon-shake 0.5s ease-in-out infinite;
+}
+
+@keyframes icon-shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+}
+
+.deadline-timer.expired .timer-icon {
+    color: #dc2626;
+}
+
+.timer-content {
+    flex: 1;
+}
+
+.timer-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #92400e;
+    margin-bottom: 4px;
+}
+
+.deadline-timer.warning .timer-label,
+.deadline-timer.expired .timer-label {
+    color: #991b1b;
+}
+
+.timer-display {
+    font-size: 28px;
+    font-weight: 900;
+    color: #78350f;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+.deadline-timer.warning .timer-display {
+    color: #991b1b;
+}
+
+.deadline-timer.expired .timer-display {
+    color: #7f1d1d;
+}
+
+.bakong-status { 
+    margin-bottom: 24px;
+    animation: fadeIn 0.6s ease-out 0.7s both;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: fade-in-up 0.5s ease-out;
+}
+
+.status-indicator.waiting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-indicator.success {
+    background: #d1fae5;
+    color: #065f46;
+    animation: success-pop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes success-pop {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(146, 64, 14, 0.2);
+    border-top-color: #92400e;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { 
+    to { transform: rotate(360deg); } 
+}
+
+.bakong-btn {
+    width: 100%;
+    padding: 18px 24px;
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.bakong-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.bakong-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.bakong-btn:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.3);
+}
+
+.bakong-btn:active {
+    transform: translateY(0);
+}
+
+.bakong-btn:disabled { 
+    background: #9ca3af !important; 
+    cursor: not-allowed; 
+    transform: none;
+    opacity: 0.6;
+}
+
+.bakong-btn i {
+    position: relative;
+    z-index: 1;
+}
+
+.bakong-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Check Payment Button */
+.check-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    animation: fadeIn 0.6s ease-out 0.7s both;
+}
+
+.check-btn:hover {
+    box-shadow: 0 12px 24px -8px rgba(102, 126, 234, 0.5);
+}
+
+/* Print button */
+.print-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.print-btn:hover {
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Success button */
+.success-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+.success-btn:hover {
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Payment success message */
+.payment-success-message {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(21, 87, 36, 0.2);
+    animation: success-slide-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Invoice Section Animation */
+.invoice-section-animated {
+    animation: invoice-appear 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes invoice-appear {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    60% {
+        transform: scale(1.02) translateY(-5px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes success-slide-in {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    50% {
+        transform: translateY(5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.payment-success-message i {
+    font-size: 28px;
+    animation: icon-bounce 0.8s ease-out 0.3s;
+}
+
+@keyframes icon-bounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    25% {
+        transform: scale(1.2);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    75% {
+        transform: scale(1.05);
+    }
+}
+
+.bakong-steps {
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+    margin-bottom: 24px;
+    animation: fadeIn 0.6s ease-out 0.8s both;
+}
+
+.bakong-steps h4 { 
+    margin: 0 0 20px 0; 
+    font-size: 16px; 
+    color: #111827;
+    font-weight: 700;
+}
+
+.step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    opacity: 0;
+    animation: step-fade-in 0.5s ease-out forwards;
+}
+
+.step-item:nth-child(1) { animation-delay: 0.1s; }
+.step-item:nth-child(2) { animation-delay: 0.2s; }
+.step-item:nth-child(3) { animation-delay: 0.3s; }
+.step-item:nth-child(4) { animation-delay: 0.4s; }
+.step-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes step-fade-in {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.step-number {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.step-number:hover {
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.step-content {
+    flex: 1;
+    padding-top: 4px;
+}
+
+.step-title {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.step-title strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+.back-link {
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.6s ease-out 0.9s both;
+}
+
+.back-link:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+@media (max-width: 480px) {
+    .bakong-card { 
+        padding: 32px 24px;
+        border-radius: 20px;
+    }
+    .qr-image { 
+        width: 200px; 
+        height: 200px; 
+    }
+    .amount-number { 
+        font-size: 40px; 
+    }
+    .bakong-header h2 {
+        font-size: 24px;
+    }
+    .bakong-logo {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+@media (min-width: 768px) {
+    .bakong-card { 
+        max-width: 480px; 
+        padding: 48px 40px; 
+    }
+    .qr-image { 
+        width: 260px; 
+        height: 260px; 
+    }
+    .amount-number { 
+        font-size: 52px; 
+    }
+}
+
+/* Print styles for invoice */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printableInvoice, #printableInvoice * {
+        visibility: visible;
+    }
+    #printableInvoice {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+        padding: 20px;
+        background: white;
+    }
+    .bakong-page, .bakong-card {
+        background: white !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Invoice template styles */
+#printableInvoice {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+}
+
+#printableInvoice .invoice-container {
+    border: 2px solid #4f46e5;
+    border-radius: 10px;
+    padding: 30px;
+}
+
+#printableInvoice .invoice-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+#printableInvoice .invoice-header h2 {
+    color: #4f46e5;
+    margin: 0 0 10px 0;
+    font-size: 28px;
+}
+
+#printableInvoice .invoice-header p {
+    margin: 3px 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+#printableInvoice .invoice-info {
+    margin-bottom: 20px;
+}
+
+#printableInvoice .invoice-info h3 {
+    color: #1f2937;
+    margin: 0 0 10px 0;
+    font-size: 24px;
+}
+
+#printableInvoice .invoice-info p {
+    margin: 5px 0;
+    color: #4b5563;
+}
+
+#printableInvoice .invoice-customer {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+#printableInvoice .invoice-customer h4 {
+    margin: 0 0 10px 0;
+    color: #374151;
+}
+
+#printableInvoice .invoice-customer p {
+    margin: 3px 0;
+    color: #4b5563;
+}
+
+#printableInvoice .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+#printableInvoice .invoice-table th {
+    background: #4f46e5;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+#printableInvoice .invoice-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#printableInvoice .invoice-table tfoot td {
+    border-top: 2px solid #4f46e5;
+    font-size: 18px;
+    color: #1f2937;
+}
+
+#printableInvoice .invoice-footer {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 14px;
+}
+</style>
+
+<script>
+// Real Bakong Payment Check - uses existing check-status API
+const billNumber = '{{ $billNumber }}';
+const totalAmount = {{ $totalAmount }};
+let isPaid = false;
+let checkTimer;
+let checkCount = 0;
+let invoiceData = null;
+let autoCheckStarted = false;
+
+// Deadline timer variables
+let deadlineMinutes = 15; // 15 minutes deadline
+let deadlineSeconds = deadlineMinutes * 60;
+let deadlineTimer;
+let deadlineExpired = false;
+
+// Toast notification function
+function showToast(message, type = 'success') {
+    // Remove existing toast if any
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Add styles
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+// Countdown timer function
+function updateDeadlineTimer() {
+    if (isPaid || deadlineExpired) {
+        return;
+    }
+    
+    deadlineSeconds--;
+    
+    const minutes = Math.floor(deadlineSeconds / 60);
+    const seconds = deadlineSeconds % 60;
+    
+    const timerDisplay = document.getElementById('timerDisplay');
+    const deadlineTimerEl = document.getElementById('deadlineTimer');
+    
+    if (timerDisplay) {
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Warning state when less than 3 minutes
+    if (deadlineSeconds <= 180 && deadlineSeconds > 0) {
+        if (deadlineTimerEl && !deadlineTimerEl.classList.contains('warning')) {
+            deadlineTimerEl.classList.add('warning');
+            showToast('⚠️ Less than 3 minutes remaining!', 'error');
+        }
+    }
+    
+    // Expired state
+    if (deadlineSeconds <= 0) {
+        deadlineExpired = true;
+        clearInterval(deadlineTimer);
+        clearInterval(checkTimer);
+        
+        if (deadlineTimerEl) {
+            deadlineTimerEl.classList.remove('warning');
+            deadlineTimerEl.classList.add('expired');
+            timerDisplay.textContent = '00:00';
+        }
+        
+        // Update status
+        document.getElementById('bakongStatus').innerHTML = `
+            <div class="status-indicator" style="background: #fee2e2; color: #991b1b;">
+                <i class="fa-solid fa-clock"></i>
+                <span>Payment session expired. Please refresh to try again.</span>
+            </div>
+        `;
+        
+        // Disable check button
+        const checkBtn = document.getElementById('checkPaymentBtn');
+        if (checkBtn) {
+            checkBtn.disabled = true;
+            checkBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Session Expired';
+        }
+        
+        showToast('⏰ Payment session expired. Please refresh the page to start a new session.', 'error');
+    }
+}
+
+// Start deadline countdown
+function startDeadlineCountdown() {
+    // Update immediately
+    updateDeadlineTimer();
+    
+    // Then update every second
+    deadlineTimer = setInterval(updateDeadlineTimer, 1000);
+}
+
+// Add toast animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    .toast-notification {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .toast-notification.toast-error {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .toast-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .toast-content i {
+        font-size: 24px;
+    }
+`;
+document.head.appendChild(style);
+
+// Load invoice data when payment is confirmed
+async function loadInvoiceData() {
+    try {
+        const response = await fetch(`/api/payment/invoice/${billNumber}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            invoiceData = result.invoice;
+            populateInvoiceTable(invoiceData);
+        }
+    } catch (error) {
+        console.log('Error loading invoice:', error);
+        // Use cart data as fallback
+        populateInvoiceFromCart();
+    }
+}
+
+// Populate invoice table from API data
+function populateInvoiceTable(data) {
+    const tbody = document.getElementById('invoiceItems');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (data && data.items) {
+        data.items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.phone_name}</td>
+                <td>${item.qty}</td>
+                <td>$${parseFloat(item.price).toFixed(2)}</td>
+                <td>$${parseFloat(item.subtotal).toFixed(2)}</td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Update total
+        const totalEl = document.getElementById('invoiceTotal');
+        if (totalEl) {
+            totalEl.textContent = '$' + parseFloat(data.total_price).toFixed(2);
+        }
+    }
+}
+
+// Populate invoice from cart (fallback)
+function populateInvoiceFromCart() {
+    const tbody = document.getElementById('invoiceItems');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const cart = @json($cart);
+    Object.entries(cart).forEach(([id, item]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>$${parseFloat(item.price).toFixed(2)}</td>
+            <td>$${(item.price * item.qty).toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Show payment confirmed UI
+function showPaymentConfirmed() {
+    // Stop timers
+    clearInterval(checkTimer);
+    clearInterval(deadlineTimer);
+    
+    // Hide deadline timer
+    const deadlineTimerEl = document.getElementById('deadlineTimer');
+    if (deadlineTimerEl) {
+        deadlineTimerEl.style.display = 'none';
+    }
+    
+    // Play success sound
+    playSuccess();
+    
+    // Show toast notification
+    showToast('🎉 Payment Successful! Your payment has been confirmed.', 'success');
+    
+    // Show payment confirmed UI
+    document.getElementById('paymentActions').style.display = 'none';
+    document.getElementById('paymentSteps').style.display = 'none';
+    document.getElementById('invoiceSection').style.display = 'block';
+    document.getElementById('backLink').style.display = 'none';
+    
+    // Load invoice data
+    loadInvoiceData();
+}
+
+// Print invoice function
+function printInvoice() {
+    // First populate invoice from cart if not loaded
+    if (!invoiceData) {
+        populateInvoiceFromCart();
+    }
+    
+    // Open print dialog
+    window.print();
+}
+
+// Manual check payment function
+async function manualCheckPayment() {
+    // Don't allow manual check if deadline expired
+    if (deadlineExpired) {
+        showToast('⏰ Payment session expired. Please refresh the page.', 'error');
+        return false;
+    }
+    
+    const btn = document.getElementById('checkPaymentBtn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+    
+    try {
+        // Find the sale ID from bill number
+        const response = await fetch(`/api/payment/check-status/${billNumber}`);
+        const data = await response.json();
+        
+        console.log('Payment check response:', data);
+        
+        if (data.paid) {
+            isPaid = true;
+            clearInterval(checkTimer);
+            clearInterval(deadlineTimer);
+            
+            // Show success status
+            document.getElementById('bakongStatus').innerHTML = `
+                <div class="status-indicator success">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>Payment Confirmed!</span>
+                </div>
+            `;
+            
+            // Show toast notification
+            showToast('🎉 Payment Successful! Your payment has been confirmed.', 'success');
+            
+            // Play success sound
+            playSuccess();
+            
+            // Show payment confirmed UI
+            showPaymentConfirmed();
+            
+            return true;
+        } else {
+            // Payment not yet confirmed
+            document.getElementById('bakongStatus').innerHTML = `
+                <div class="status-indicator waiting">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                    <span id="statusText">${data.message || 'Payment not yet confirmed. Please complete payment via Bakong app.'}</span>
+                </div>
+            `;
+            
+            showToast(data.message || 'Payment not yet confirmed. Please try again.', 'error');
+            
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    } catch (error) {
+        console.error('Check error:', error);
+        showToast('Error checking payment. Please try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+    
+    return false;
+}
+
+// Auto check payment function
+async function checkRealPayment() {
+    // Don't check if deadline expired
+    if (deadlineExpired) {
+        return false;
+    }
+    
+    try {
+        checkCount++;
+        console.log('Checking payment #' + checkCount);
+        
+        // Check payment status via API
+        const response = await fetch(`/api/payment/check-status/${billNumber}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            console.log('API response not OK:', response.status);
+            return false;
+        }
+        
+        const data = await response.json();
+        
+        console.log('Payment response:', data);
+        
+        // If paid is true from API
+        if (data.paid && !isPaid) {
+            isPaid = true;
+            clearInterval(checkTimer);
+            clearInterval(deadlineTimer);
+            
+            // Show success status
+            document.getElementById('bakongStatus').innerHTML = `
+                <div class="status-indicator success">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>Payment Confirmed!</span>
+                </div>
+            `;
+            
+            // Show toast notification
+            showToast('🎉 Payment Successful! Your payment has been confirmed.', 'success');
+            
+            // Play sound
+            playSuccess();
+            
+            // Show payment confirmed UI (instead of auto redirect)
+            showPaymentConfirmed();
+            
+            // Try browser notification if permitted
+            if (Notification.permission === 'granted') {
+                new Notification('Payment Confirmed!', {
+                    body: 'Your payment of $' + totalAmount.toFixed(2) + ' has been confirmed!',
+                    icon: '/favicon.ico'
+                });
+            }
+            
+            return true;
+        } else {
+            // Update waiting message with elapsed time
+            const elapsed = checkCount * 2; // 2 seconds per check
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            document.getElementById('statusText').textContent = `Waiting for payment... (${mins}m ${secs}s)`;
+        }
+    } catch (error) {
+        console.log('Check error:', error);
+    }
+    return false;
+}
+
+function playSuccess() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [523, 659, 784, 1047].forEach((f, i) => {
+            setTimeout(() => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = f;
+                g.gain.setValueAtTime(0.25, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                o.start(); o.stop(ctx.currentTime + 0.25);
+            }, i * 100);
+        });
+    } catch(e) {}
+}
+
+// TEST FUNCTION: Mark payment as paid manually
+async function markAsPaid() {
+    const btn = document.getElementById('markPaidBtn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    
+    try {
+        const response = await fetch(`/api/payment/mark-paid/${billNumber}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            isPaid = true;
+            clearInterval(checkTimer);
+            
+            // Show success status
+            document.getElementById('bakongStatus').innerHTML = `
+                <div class="status-indicator success">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>Payment Confirmed!</span>
+                </div>
+            `;
+            
+            showToast('✅ Payment marked as paid successfully!', 'success');
+            playSuccess();
+            showPaymentConfirmed();
+        } else {
+            showToast('Error: ' + data.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    } catch (error) {
+        console.error('Mark paid error:', error);
+        showToast('Error marking payment as paid', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+// Simulate payment (for development/testing)
+async function simulatePayment() {
+    const btn = document.getElementById('simulatePaymentBtn');
+    if (!btn) return;
+    
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simulating...';
+    
+    try {
+        const response = await fetch(`/api/payment/mark-paid/${billNumber}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            isPaid = true;
+            clearInterval(checkTimer);
+            
+            document.getElementById('bakongStatus').innerHTML = `
+                <div class="status-indicator success">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>Payment Confirmed!</span>
+                </div>
+            `;
+            
+            showToast('✅ Payment simulated successfully!', 'success');
+            playSuccess();
+            showPaymentConfirmed();
+        } else {
+            showToast('Error: ' + data.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    } catch (error) {
+        console.error('Simulate error:', error);
+        showToast('Error simulating payment', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+// Initialize
+const cart = @json($cart);
+document.addEventListener('DOMContentLoaded', function() {
+    // Request browser notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
+    // Set cart data
+    document.getElementById('cartData').value = JSON.stringify(
+        Object.entries(cart).map(([id, item]) => ({
+            phone_id: parseInt(id),
+            qty: item.qty,
+            price: item.price
+        }))
+    );
+    
+    // Populate invoice table from cart (for printing)
+    populateInvoiceFromCart();
+    
+    // Wait for QR code image to load before starting auto-check
+    const qrImage = document.querySelector('.qr-image');
+    if (qrImage) {
+        if (qrImage.complete) {
+            // Image already loaded
+            startAutoCheck();
+        } else {
+            // Wait for image to load
+            qrImage.addEventListener('load', function() {
+                startAutoCheck();
+            });
+            
+            // Fallback: start after 2 seconds even if image doesn't load
+            setTimeout(() => {
+                if (!autoCheckStarted) {
+                    startAutoCheck();
+                }
+            }, 2000);
+        }
+    } else {
+        // No QR image found, start immediately
+        startAutoCheck();
+    }
+});
+
+// Function to start auto-check
+function startAutoCheck() {
+    if (autoCheckStarted) return; // Prevent multiple starts
+    autoCheckStarted = true;
+    
+    console.log('QR code ready - starting auto payment check and deadline countdown');
+    
+    // Start deadline countdown
+    startDeadlineCountdown();
+    
+    // Update status to show checking has started
+    document.getElementById('statusText').textContent = 'QR Ready - Waiting for payment...';
+    
+    // First check immediately
+    checkRealPayment();
+    
+    // Then check every 2 seconds (optimized for smooth experience)
+    checkTimer = setInterval(checkRealPayment, 2000);
+}
+</script>
+
+@endsection

@@ -1,0 +1,38 @@
+﻿╔════════════════════════════════════════════════════════════════╗
+║           📱 PHONESHOP ADMIN PANEL - MENU OPTIONS             ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  📊 DASHBOARD                                                  ║
+║  ├─ 🎯 Dashboard          → /dashboard                        ║
+║                                                                ║
+║  📦 MAIN MENU                                                  ║
+║  ├─ 📚 Categories         → /categories                       ║
+║  └─ 📦 Products           → /phones                           ║
+║                                                                ║
+║  💰 SALES                                                      ║
+║  ├─ 🏪 POS System         → /sales/create                     ║
+║  ├─ 🛒 Sales History      → /sales                            ║
+║  └─ ✅ Order Approval     → /orders/approval                  ║
+║                                                                ║
+║  📈 ANALYTICS                                                  ║
+║  └─ 📊 Reports            → /reports                          ║
+║                                                                ║
+║  👥 MANAGEMENT                                                 ║
+║  ├─ 👥 Users              → /users                            ║
+║  └─ 🖼️  Slideshow         → /slides                           ║
+║                                                                ║
+║  ⚙️  SYSTEM                                                    ║
+║  ├─ ⚙️  Settings          → /settings                         ║
+║  ├─ 🔑 API Keys           → /api-keys                         ║
+║  └─ 👤 My Profile         → /profile                          ║
+║                                                                ║
+║  🚪 ACCOUNT                                                    ║
+║  └─ 🚪 Logout             → /logout                           ║
+║                                                                ║
+╠════════════════════════════════════════════════════════════════╣
+║  📊 STATISTICS                                                 ║
+║  • Total Menu Items: 13                                        ║
+║  • Sections: 6                                                 ║
+║  • Permissions: 10                                             ║
+║  • Modern UI: ✅ Complete                                      ║
+╚════════════════════════════════════════════════════════════════╝

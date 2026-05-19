@@ -1,0 +1,245 @@
+<?php $__env->startSection('content'); ?>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">Add New Slide</h3>
+    <a href="<?php echo e(route('slides.index')); ?>" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to List
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Form Section -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form action="<?php echo e(route('slides.store')); ?>" method="POST" enctype="multipart/form-data" id="slideForm">
+                    <?php echo csrf_field(); ?>
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Title</label>
+                            <input type="text" name="title" id="slideTitle" class="form-control <?php $__errorArgs = ['title'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" value="<?php echo e(old('title')); ?>" required>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['title'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Order</label>
+                            <input type="number" name="order" class="form-control" value="<?php echo e(old('order', 0)); ?>">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea name="description" id="slideDescription" class="form-control" rows="3"><?php echo e(old('description')); ?></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Button Text</label>
+                            <input type="text" name="button_text" id="slideButtonText" class="form-control" value="<?php echo e(old('button_text')); ?>">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Button Link</label>
+                            <input type="text" name="button_link" id="slideButtonLink" class="form-control" value="<?php echo e(old('button_link')); ?>">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Slide Image</label>
+                            <input type="file" name="image" id="slideImage" class="form-control <?php $__errorArgs = ['image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                            <small class="text-muted">Recommended: 1920x600px or higher (Max 10MB)</small>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" checked>
+                                <label class="form-check-label fw-semibold" for="is_active">Active Status</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-plus me-2"></i>Create Slide
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Preview Section -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fa-solid fa-eye me-2"></i>Live Preview</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="slide-preview-container">
+                    <div class="slide-preview-card">
+                        <img id="previewImage" src="https://via.placeholder.com/800x480/4f46e5/ffffff?text=Upload+Image" alt="Preview">
+                        <div class="slide-preview-content">
+                            <h2 id="previewTitle">Your Title Here</h2>
+                            <p id="previewDescription">Your description will appear here</p>
+                            <button id="previewButton" class="preview-btn" style="display:none;">
+                                <span id="previewButtonText">Button Text</span>
+                                <i class="fa-solid fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .slide-preview-container {
+        background: #0a1628;
+        padding: 40px 20px;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .slide-preview-card {
+        width: 100%;
+        max-width: 600px;
+        height: 360px;
+        background: #1e293b;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+        position: relative;
+        transition: transform 0.3s ease;
+    }
+
+    .slide-preview-card:hover {
+        transform: scale(1.02);
+    }
+
+    .slide-preview-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.7);
+    }
+
+    .slide-preview-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 70%, transparent 100%);
+        color: white;
+    }
+
+    .slide-preview-content h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+
+    .slide-preview-content p {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+
+    .preview-btn {
+        display: inline-block;
+        background: white;
+        color: #4f46e5;
+        padding: 10px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+    }
+
+    .preview-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+    }
+
+    @media (max-width: 991px) {
+        .slide-preview-card {
+            height: 300px;
+        }
+        
+        .slide-preview-content h2 {
+            font-size: 1.5rem;
+        }
+        
+        .slide-preview-content p {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    // Live Preview Updates
+    document.getElementById('slideTitle').addEventListener('input', function(e) {
+        document.getElementById('previewTitle').textContent = e.target.value || 'Your Title Here';
+    });
+
+    document.getElementById('slideDescription').addEventListener('input', function(e) {
+        document.getElementById('previewDescription').textContent = e.target.value || 'Your description will appear here';
+    });
+
+    document.getElementById('slideButtonText').addEventListener('input', function(e) {
+        const btn = document.getElementById('previewButton');
+        const text = document.getElementById('previewButtonText');
+        if (e.target.value) {
+            text.textContent = e.target.value;
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    });
+
+    document.getElementById('slideImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('previewImage').src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\Practice\phoneshop\phoneshop\resources\views/slides/create.blade.php ENDPATH**/ ?>

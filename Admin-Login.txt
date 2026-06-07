@@ -1,2 +1,13 @@
-UserName:Lensophara@gmail.com
-Password:77778888
+# CREDENTIALS REMOVED FOR SECURITY
+# 
+# This file previously contained hardcoded admin credentials.
+# Credentials should NEVER be committed to version control.
+#
+# For deployment, use environment variables instead:
+# - Set ADMIN_EMAIL in your deployment platform
+# - Set ADMIN_PASSWORD in your deployment platform
+#
+# Example for Render:
+# Environment Variables:
+#   ADMIN_EMAIL=your-email@example.com
+#   ADMIN_PASSWORD=your-secure-password

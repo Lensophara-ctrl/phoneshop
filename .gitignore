@@ -11,3 +11,4 @@ Thumbs.db
 /storage/logs/*
 !/storage/framework/.gitkeep
 !/storage/logs/.gitkeep
+Admin-Login.txt
